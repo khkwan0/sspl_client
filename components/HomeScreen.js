@@ -6,6 +6,10 @@ import Player from './Player'
 import Players from './Players'
 
 class HomeScreen extends React.Component {
+  static navigationOptions = {
+    title: 'Home',
+  };
+
   constructor(props) {
     super(props)
 

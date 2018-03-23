@@ -4,7 +4,9 @@ import Set from './Set'
 import io from 'socket.io-client'
 
 class Match extends Component {
-
+  static navigationOptions = {
+    title: 'Match',
+  };
   constructor(props) {
     super(props)
 

@@ -4,6 +4,9 @@ import {ScrollView, View, AsyncStorage, TouchableHighlight, Text} from 'react-na
 //import Match from './Match'
 
 class ScoreSheets extends Component {
+  static navigationOptions = {
+    title: 'Score Sheets',
+  };
   constructor(props) {
     super(props)
 
