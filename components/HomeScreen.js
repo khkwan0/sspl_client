@@ -1,9 +1,10 @@
 import React, {Component} from 'react'
-import {View, Button, Text, AsyncStorage} from 'react-native'
+import {View, Button, Text, AsyncStorage, TouchableHighlight} from 'react-native'
 import Team from './Team'
 import Teams from './Teams'
 import Player from './Player'
 import Players from './Players'
+import Config from './Config'
 
 class HomeScreen extends React.Component {
   static navigationOptions = {
@@ -47,7 +48,8 @@ class HomeScreen extends React.Component {
       teamID: -1,
       teamName: '',
       teams: this.teams,
-      players: this.players,
+      players: this.players,      
+      serverAlive: true
     }
   }
 
@@ -67,12 +69,34 @@ class HomeScreen extends React.Component {
     .catch((err) => {
       console.log(err)
     })  
-
     this.utilities = {
       addMemberToTeam: this.addMemberToTeam,
       savePlayer: this.savePlayer,
     }
+  }
 
+  componentDidMount() {
+    rv = false
+    console.log(Config.server)
+    console.log('ping')
+    fetch(Config.server + '/ping')
+    .then((response) => response.json())
+    .then((responseJson) => {
+      //console.log(responseJson)
+      if (responseJson.response == 'pong') {        
+        console.log(responseJson.response)
+        rv = true
+      }
+      this.setState({
+        serverAlive: rv
+      })
+    })
+    .catch((err) => {
+      console.log(err)
+      this.setState({
+        serverAlive: rv
+      })
+    })
   }
 
   savePlayer(playerName) {
@@ -114,10 +138,35 @@ class HomeScreen extends React.Component {
   render() {
     const team = this.state.teamName
     return (
-      <View>
-        <Text>Team: {team}</Text>
-        <Button onPress={this.scoreSheetsBtnHandler} title="Score Sheets" />
-        <Button onPress={this.archivesBtnHandler} title="Archives" />
+      <View style={{flex: 1, justifyContent:'flex-start', flexDirection:'column', backgroundColor:'green'}}>
+        {!this.state.serverAlive &&
+          <View style={{flex: 1, flexDirection: 'row', justifyContent:'center'}}>
+            <View>
+              <Text style={{backgroundColor:'red', color: 'white'}}>Server is currently down.  Data will be saved on your device</Text>
+            </View>
+          </View>
+        }
+
+        <View style={{flex: 1, justifyContent:'flex-start', alignItems:'center',marginTop:100}}>
+          <Text style={{fontSize: 24}}>Team: {team}</Text>      
+        </View>
+
+        <View style={{flex: 1, justifyContent:'flex-start', alignItems:'center'}}>
+          <TouchableHighlight onPress={this.scoreSheetsBtnHandler} style={{paddingTop:10}}>
+            <View style={{borderRadius:10, borderWidth: 1}}>
+              <Text style={{fontSize:26, paddingLeft:10, paddingRight:10}}>
+                Score Sheets
+              </Text>
+            </View>
+          </TouchableHighlight>
+          <TouchableHighlight onPress={this.archivesBtnHandler} style={{paddingTop:10}}>
+            <View style={{borderRadius:10, borderWidth: 1}}>
+              <Text style={{fontSize:26, paddingLeft:10, paddingRight:10}}>
+                Archives
+              </Text>
+            </View>
+          </TouchableHighlight>
+        </View>
       </View>
     )
   }
