@@ -104,7 +104,7 @@ class Game extends Component {
     let homeB = ''
     let awayA = ''
     let awayB = ''
-    if (typeof this.props.gameData[this.props.gameNo] == 'undefined') {
+    if (typeof this.props.gameData[this.props.gameNo] == 'undefined' || !this.props.gameData[this.props.gameNo]) {
       this.homePlayers = [-1, -1]
       this.awayPlayers = [-1, -1]
     } else {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   gameNo: {
     flexShrink: 0,
     flexGrow: 0,
-    flexBasis: 17
+    flexBasis: 20
   },
   playerFont: {
     fontSize: 18,  

@@ -52,7 +52,7 @@ class HomeScreen extends React.Component {
     .then((teamInfoStr) => {
       teamInfo = JSON.parse(teamInfoStr)
       if (!teamInfo || teamInfo.teamId == null || typeof teamInfo.teamId == 'undefined' || teamInfo.teamId < 0) {
-        this.props.navigation.navigate('ChooseTeam', {setTeam: this.setTeam, teams: this.teams})        
+        this.props.navigation.navigate('ChooseTeam', {setTeam: this.setTeam, teams: this.teams.getTeams()})        
       } else {
         this.setState({
           teamName: teamInfo.teamName,
@@ -98,10 +98,10 @@ class HomeScreen extends React.Component {
   }
 
   setTeam(teamId) {
-    AsyncStorage.setItem('myTeam', JSON.stringify({teamName: this.teams[teamId].teamName, teamId: teamId})).
+    AsyncStorage.setItem('myTeam', JSON.stringify({teamName: this.teams.getTeam(teamId).teamName, teamId: teamId})).
     then(() => {
       this.setState({
-        teamName: this.teams[teamId].teamName,
+        teamName: this.teams.getTeam(teamId).teamName,
         teamId: teamId
       })
     })

@@ -23,6 +23,10 @@ class Teams {
   add(team) {
     this.teams.push(team)
   }
+
+  getTeams() {
+    return this.teams
+  }
 }
 
 export default Teams

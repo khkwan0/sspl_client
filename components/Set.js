@@ -7,7 +7,6 @@ class Set extends Component {
     super(props)
     this.state = {
       type: this.props.type,
-      games: []
     }
   }
 
@@ -24,7 +23,7 @@ class Set extends Component {
     let matchScoreHome = 0
     let matchScoreAway = 0
     for (let i = 0; i<(this.props.startingGameNo + this.props.numGames); i++) {
-      if (typeof this.props.gameData[i] !== 'undefined') {
+      if (typeof this.props.gameData[i] !== 'undefined' && this.props.gameData[i]) {
         if (this.props.gameData[i].winner == 'home') {
           matchScoreHome++
         }
@@ -34,7 +33,7 @@ class Set extends Component {
       }
     }
     for (let i = 0; i < this.props.numGames; i++) {
-      if (typeof this.props.gameData[this.props.startingGameNo + i] !== 'undefined') {
+      if (typeof this.props.gameData[this.props.startingGameNo + i] !== 'undefined' && this.props.gameData[this.props.startingGameNo + i]) {
         if (this.props.gameData[this.props.startingGameNo + i].winner == 'home') {
           setScoreHome++
         }
@@ -52,7 +51,7 @@ class Set extends Component {
           key={this.props.setNumber + '_' + i}
           type={this.state.type}
           setNo={this.props.setNumber}
-          gameNo={this.props.startingGameNo +  i} />
+          gameNo={this.props.startingGameNo + i} />
         )
     }
     return(

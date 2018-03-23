@@ -17,26 +17,36 @@ class ScoreSheets extends Component {
 
   componentDidMount() {
     AsyncStorage.getItem('matches').
-    then((matchesStr) => {
+    then((matchesStr) => {      
       if (!matchesStr) {
-          this.getMatches()
+        this.getMatches()
       } else {
-        var matches = null;
         try {
           matches = JSON.parse(matchesStr)
-          if (matches) {
-            this.setState({
-              matches: matches
-            })
-          } else {
+          if (matches.expireDate == 'undefined' || !matches.expireDate) {
             this.getMatches()
+          } else {            
+            today = new Date
+            today.setHours(0,0,0,0)
+            matches.expireDate = new Date(matches.expireDate)
+            matches.expireDate.setHours(0,0,0,0)
+            if (matches.expireDate < today) {
+              this.getMatches()
+            } else {
+              for (let i = 0; i < matches.matches.length; i++) {
+                matches.matches[i].matchDate = new Date(matches.matches[i].matchDate)
+              }
+              this.setState({
+                matches: matches.matches
+              })
+            }
           }
         }
         catch(err) {
           console.log(err)
           this.getMatches()
         }
-      } 
+      }
     })
     .catch((err) => {
       console.log(err)
@@ -50,6 +60,27 @@ class ScoreSheets extends Component {
   }
 
   getMatches() {
+    matches = []
+    console.log('get matches from remote')
+    fetch('http://192.168.1.106:9988/matches')
+    .then((response) => response.json())
+    .then((responseJson) => {      
+      for (let i = 0; i < responseJson.length; i++) {
+        responseJson[i].matchId = responseJson[i]._id
+        responseJson[i].matchDate = new Date(responseJson[i].matchDate)
+      }
+      matches = responseJson
+      expireDate = new Date()
+      expireDate.setDate(expireDate.getDate() + 7)
+      AsyncStorage.setItem('matches', JSON.stringify({expireDate: expireDate, matches: matches}))
+      this.setState({
+        matches: matches
+      })
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+    /*
     let theDate = new Date()
     let futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 3)
@@ -62,16 +93,14 @@ class ScoreSheets extends Component {
       {matchId: 5, matchDate: futureDate, homeTeamId: 0, awayTeamId: 1, matchType: 'mixed', round: 1},
     ]
 
-    /*
+
     matches.push({date: new Date(), type: 'mixed', homeTeamId: 0, awayTeamId: 1, matchId: 1})
     matches.push({date: new Date(), type: 'eight', homeTeamId: 0, awayTeamId: 2, matchId: 2})
     matches.push({date: new Date(), type: 'nine', homeTeamId: 0, awayTeamId: 3, matchId: 3})
     matches.push({date: new Date(), type: 'mixed', homeTeamId: 2, awayTeamId: 3, matchId: 4})
     matches.push({date: futureDate, type: 'mixed', homeTeamId: 0, awayTeamId: 1, matchId: 5})
     */
-    this.setState({
-      matches: matches
-    })
+
   }
 
   render() {
