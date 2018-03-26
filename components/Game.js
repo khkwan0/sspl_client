@@ -24,6 +24,8 @@ class Game extends Component {
     this.setPlayer = this.setPlayer.bind(this)
     this.closePlayerPicker = this.closePlayerPicker.bind(this)
     this.showAddPlayer = this.showAddPlayer.bind(this)
+    this.closeAddNewPlayerModal = this.closeAddNewPlayerModal.bind(this)
+    this.addNewPlayer = this.addNewPlayer.bind(this)
   }
 
   choosePlayer(isHome, isTop) {
@@ -44,9 +46,22 @@ class Game extends Component {
     })
   }
 
+  addNewPlayer(player) {
+    if (this.playerPickerIsHome) {
+      this.homeTeam.addPlayer(player.playerId)      
+    } else {
+      this.awayTeam.addPlayer(player.playerId)
+    }
+    this.setPlayer(player.playerId)
+  }
+
   setPlayer(playerId) {
+    console.log('setplayer : '+ playerId)
+    console.log(this.playerPickerIsHome)
+    console.log(this.playerPickerIsTop)
     if (this.playerPickerIsHome) {
       if (this.playerPickerIsTop) {
+        console.log('here')
         this.homePlayers[0] = playerId
       } else {
         this.homePlayers[1] = playerId
@@ -58,18 +73,19 @@ class Game extends Component {
         this.awayPlayers[1] = playerId
       }
     }
+    console.log(this.homePlayers)
     //closeModal()
-    this.setState({
-      showPlayerPicker: false
-    })
-    gameData = {
+    let gameData = {
       gameNo: this.props.gameNo,
       homePlayers: this.homePlayers,
       awayPlayers: this.awayPlayers,
       setNo: this.props.setNo,
       winner: this.winner
     }
+    console.log('setgame data')
+    console.log(gameData)
     this.props.setGameData(gameData)
+
   }
 
   setWinner(winner) {
@@ -77,7 +93,7 @@ class Game extends Component {
       winner = 'na'
     }
     this.winner = winner
-    gameData = {
+    let gameData = {
       gameNo: this.props.gameNo,
       homePlayers: this.homePlayers,
       awayPlayers: this.awayPlayers,
@@ -215,6 +231,7 @@ class Game extends Component {
           isHome={this.playerPickerIsHome}
           team={this.playerPickerTeam}
           players={this.props.players}
+          addNewPlayer={this.addNewPlayer}   
         />
       }
       </View>

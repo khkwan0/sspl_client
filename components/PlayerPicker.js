@@ -16,6 +16,7 @@ class PlayerPicker extends Component {
     if (playerId != -2) {
       if (typeof this.props.setPlayer != 'undefined') {
         this.props.setPlayer(playerId)
+        this.closeModal()
       }
     } else {
       this.props.showAddPlayer()
@@ -28,6 +29,7 @@ class PlayerPicker extends Component {
 
   render() {      
     var players = this.props.team.teamPlayers
+    console.log(players)
     var pickerItems = []
     players.map((playerId, i) => {
       player = this.props.players.getPlayer(playerId)

@@ -12,6 +12,7 @@ class AddPlayer extends Component {
     this.handleChangeText = this.handleChangeText.bind(this)
     this.closeModal = this.closeModal.bind(this)
     this.setName = this.setName.bind(this)
+    this.guid = this.guid.bind(this)
   }
 
   handleChangeText(newName) {
@@ -24,10 +25,24 @@ class AddPlayer extends Component {
     this.props.closeAddPlayer()
   }
 
-  setName() {
-    console.log(this.state.playerName)
-    this.props.addTeamMember(this.props.buttonMetaData, this.state.playerName)
-    this.closeModal()
+  setName() {    
+    // save new player to db
+    this.props.players.addNewPlayer(this.state.playerName)
+    .then((player) => {
+      this.props.addNewPlayer(player)
+      this.closeModal()
+    })
+    .catch((err) => {  // if no network, create temp id
+      console.log(err)
+      let tempId = this.guid()
+      let player = this.props.players.AddPlayer(tempId, this.state.playerName)
+      this.props.addNewPlayer(player)
+      this.closeModal()
+    })
+  }
+
+  guid() {
+    return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
   }
 
   render() {

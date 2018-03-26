@@ -1,4 +1,5 @@
 import Player from './Player'
+import Config from './Config'
 
 class Players {
   constructor(players) {
@@ -10,15 +11,38 @@ class Players {
   }
 
   addNewPlayer(playerName) {
-    newPlayerId = 9999
-    player = new Player(newPlayerId, playerName)
-    this.players.push(player)
-    return player
+    return new Promise((resolve, reject) => {
+      fetch(Config.server + '/players',
+      {
+        method: 'POST',
+        body: JSON.stringify({newPlayerName: playerName}),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'        
+      })
+      .then((result) => result.json())
+      .then((resultJson) => {
+        if (resultJson && typeof resultJson.playerId != 'undefined')
+        {
+          let player = this.addPlayer(resultJson.playerId, playerName)
+          resolve(player)
+        } else {
+          reject('invalid server response')
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+        reject(err)
+      })
+    })
   }
 
   addPlayer(playerId, playerName) {
-    player = new Player(playerId, playerName)
+    let player = new Player(playerId, playerName)
     this.players.push(player)
+    return player
   }
 
   addPrePlayer(player) {
@@ -26,9 +50,9 @@ class Players {
   }
 
   getPlayer(playerId) {
-    i = 0
-    found = false
-    rv = null
+    let i = 0
+    let found = false
+    let rv = null
     while (i < this.players.length && !found) {
       if (this.players[i].playerId == playerId ) {
         rv = this.players[i]

@@ -1,6 +1,5 @@
 import React, {Component} from 'react'
 import { StackNavigator } from 'react-navigation'
-import ScoreSheet from './components/ScoreSheet'
 import ScoreSheets from './components/ScoreSheets'
 import Archives from './components/Archives'
 import HomeAwayPicker from './components/HomeAwayPicker'
@@ -8,6 +7,9 @@ import HomeScreen from './components/HomeScreen'
 import ConfirmDate from './components/ConfirmDate'
 import ChooseTeam from './components/ChooseTeam'
 import Match from './components/Match'
+import OtherMatches from './components/OtherMatches'
+import BrowseMatches from './components/BrowseMatches'
+import BrowseTeamMatches from './components/BrowseTeamMatches'
 
 const RootStack = StackNavigator(
   {
@@ -17,7 +19,10 @@ const RootStack = StackNavigator(
     HomeAwayPicker: {screen: HomeAwayPicker},
     ConfirmDate: {screen: ConfirmDate},
     ChooseTeam: {screen:ChooseTeam},
-    Match: {screen:Match}
+    Match: {screen:Match},
+    OtherMatches: {screen: OtherMatches},
+    BrowseMatches: {screen: BrowseMatches},
+    BrowseTeamMatches: {screen: BrowseTeamMatches}
   },
   {
     initialRouteName: 'HomeScreen'

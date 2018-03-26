@@ -17,7 +17,7 @@ class Set extends Component {
     } else {
       setType = 'Doubles'
     }
-    rows = []      
+    let rows = []      
     let setScoreHome = 0
     let setScoreAway = 0
     let matchScoreHome = 0
@@ -44,8 +44,8 @@ class Set extends Component {
       rows.push(
         <Game 
           setGameData={this.props.setGameData}
-          gameData={this.props.gameData}
           players={this.props.players}
+          gameData={this.props.gameData}
           awayTeam={this.props.awayTeam}
           homeTeam={this.props.homeTeam}
           key={this.props.setNumber + '_' + i}

@@ -1,12 +1,13 @@
 import React, {Component} from 'react'
-import {View, Button, Text, AsyncStorage, TouchableHighlight} from 'react-native'
+import {View, Button, Text, AsyncStorage, TouchableHighlight, Modal} from 'react-native'
 import Team from './Team'
 import Teams from './Teams'
 import Player from './Player'
 import Players from './Players'
 import Config from './Config'
+import ChooseTeam from './ChooseTeam';
 
-class HomeScreen extends React.Component {
+class HomeScreen extends Component {
   static navigationOptions = {
     title: 'Home',
   };
@@ -16,68 +17,212 @@ class HomeScreen extends React.Component {
 
     this.scoreSheetsBtnHandler = this.scoreSheetsBtnHandler.bind(this)
     this.archivesBtnHandler = this.archivesBtnHandler.bind(this)
-    this.setTeam = this.setTeam.bind(this)    
-    this.savePlayer = this.savePlayer.bind(this)
-    this.addMemberToTeam = this.addMemberToTeam.bind(this)
+    this.otherMatchesBtnHandler = this.otherMatchesBtnHandler.bind(this)
+    this.setTeam = this.setTeam.bind(this)
+    this.getSeasonData = this.getSeasonData.bind(this)
+    this.getSeasonFromLocal = this.getSeasonFromLocal.bind(this)
+    this.getSeasonFromRemote = this.getSeasonFromRemote.bind(this)
 
-    this.players = new Players(null)
-    this.players.addPrePlayer(new Player(0,'ken'))
-    this.players.addPlayer(1, 'su')
-    this.players.addPlayer(2, 'jo')
-    this.players.addPlayer(3, 'blo')
-    this.players.addPlayer(4, 'apple')
-    this.players.addPlayer(5, 'orange')
-    this.players.addPlayer(6, 'jack')
-    this.players.addPlayer(7, 'oh')
-    this.players.addPlayer(8, 'ton')
-
-    this.teams = new Teams()
-    this.teams.add(new Team(0, 'Crazy Breakers', [0, 1]))
-    this.teams.add(new Team(1, 'Breakers Fun', [2, 3]))
-    this.teams.add(new Team(2, 'Ice Breakers', [4, 5]))
-    this.teams.add(new Team(3, 'Hideaway', [6, 7, 8]))
-    /*
-    this.teams = []
-    this.teams.push({teamId: 0, teamName: 'Crazy Breakers',teamMembers: [{playerId: 0}, {playerId: 1}]})
-    this.teams.push({teamId: 1, teamName: 'Breakers Fun', teamMembers: [{playerId: 2}, {playerId: 3}]})
-    this.teams.push({teamId: 2, teamName: 'Ice Breakers', teamMembers: [{playerId: 4}, {playerId: 5}]})
-    this.teams.push({teamId: 3, teamName: 'Hideaway', teamMembers: [{playerId: 6}, {playerId: 7}, {playerId: 8}]})
-    */
+    this.getTeams = this.getTeams.bind(this)
+    this.getTeamsFromRemote = this.getTeamsFromRemote.bind(this)
+    this.getMyTeam = this.getMyTeam.bind(this)
 
     this.state = {
       teamID: -1,
       teamName: '',
-      teams: this.teams,
+      teams: null,
       players: this.players,      
-      serverAlive: true
+      serverAlive: true,
     }
   }
 
+  getTeams() {
+    console.log('get teams from local')  
+    return new Promise((resolve, reject) => {
+      AsyncStorage.getItem('teams')
+      .then((teamsStr) => {
+        if (teamsStr) {
+          try {
+            teams = JSON.parse(teamsStr)
+            if (teams.length) {
+              teamsObj = new Teams()
+              for (let i = 0; i < teams.length; i++) {
+                teamsObj.add(new Team(teams[i]))
+              }
+              resolve(teamsObj)
+            }
+          } catch (err) {
+            //console.log(err)
+            reject(err)
+          }
+        } else {
+          reject('no string')
+        }
+      })
+      .catch((err) => {
+        reject(err)
+      })      
+    })
+  }
+
+  getTeamsFromRemote() {
+    console.log('get teams from remote')
+    return new Promise((resolve, reject) => {
+      fetch(Config.server + '/teams/' + Config.season)
+      .then((results) => results.json())
+      .then((resultJson) => {
+        teams = resultJson
+        if (teams.length) {
+          AsyncStorage.setItem('teams', JSON.stringify(teams))
+          teamsObj = new Teams()
+          for (let i = 0; i < teams.length; i++) {
+            teamsObj.add(new Team(teams[i]))
+          }
+          resolve(teamsObj)
+        } else {
+          reject(null)
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+        reject(err)
+      })
+    })
+  }
+
+  getSeasonFromLocal() {
+    console.log('get season data from local')
+    return new Promise((resolve, reject) => {
+      if (Config.disableLocalSave) {
+        reject('local store disabled')
+      } else {
+        AsyncStorage.getItem(Config.seasonDataLocalStorageKey)
+        .then((seasonDataStr) => {
+          seasonData = JSON.parse(seasonDataStr)
+          if (typeof seasonData.season != 'undefined' && typeof seasonData.seasonExpireDate != 'undefined' && seasonData.seasonExpireDate) {
+            today = new Date()
+            expireDate = new Date(seasonData.seasonExpireDate)
+            if (today.getTime() > expireDate.getTime()) {
+              reject('cached season data is expired')
+            } else {
+              resolve(seasonData)
+            }
+          } else {
+            reject('no local data')
+          }
+        })
+        .catch((err) => {
+          reject(err)
+        })
+      }
+    })
+  }
+
+  getSeasonFromRemote() {
+    console.log('get season data from remote')
+    return new Promise((resolve, reject) => {
+      fetch(Config.server +'/seasondata')
+      .then((result) => result.json())
+      .then((resultJson) => {
+        if (typeof resultJson.season != 'undefined') {
+          AsyncStorage.setItem(Config.seasonDataLocalStorageKey, JSON.stringify(resultJson))
+          resolve(resultJson)
+        } else {
+          reject('malformed season data from server')
+        }
+      })
+      .catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  getSeasonData() {
+    console.log('get season data')
+    return new Promise((resolve, reject) => {
+      this.getSeasonFromLocal()
+      .then((seasonData) => {
+        resolve(seasonData)
+      })
+      .catch((err) => {
+        console.log(err)
+        this.getSeasonFromRemote()
+        .then((seasonData) => {
+          resolve(seasonData)
+        })
+        .catch((err) => {
+          console.log(err)
+          reject(err)
+        })
+      })
+    })
+  }
+
   componentWillMount() {
+    this.getSeasonData()
+    .then((seasonData) => {
+      Config.season = seasonData.season
+      if (Config.disableLocalSave) {
+        this.getTeamsFromRemote()
+        .then((teams) => {
+          this.teams = teams
+          this.getMyTeam()
+        })
+        .catch((err) => {
+          if (err) {
+            console.log(err)
+          }
+        })
+      } else {
+        this.getTeams()
+        .then((teams) => {
+          this.teams = teams
+          this.getMyTeam()
+        })
+        .catch((err) => {
+          if (err) {
+            console.log(err)
+          }
+          this.getTeamsFromRemote()
+          .then((teams) => {
+            this.teams = teams
+            this.getMyTeam()
+          })
+          .catch((err) => {
+            if (err) {
+              console.log(err)
+            }
+          })
+        })
+      }
+    })
+    .catch((err) => {
+      console.log(err)
+      console.log('NO SEASON DATA')
+    })    
+  }
+
+  getMyTeam() {
     AsyncStorage.getItem('myTeam')
     .then((teamInfoStr) => {
-      teamInfo = JSON.parse(teamInfoStr)
+      teamInfo = JSON.parse(teamInfoStr)    
       if (!teamInfo || teamInfo.teamId == null || typeof teamInfo.teamId == 'undefined' || teamInfo.teamId < 0) {
         this.props.navigation.navigate('ChooseTeam', {setTeam: this.setTeam, teams: this.teams.getTeams()})        
       } else {
         this.setState({
           teamName: teamInfo.teamName,
-          teamId: teamInfo.teamId
+          teamId: teamInfo.teamId,
+          teams: this.teams
         })
       }
     })
     .catch((err) => {
       console.log(err)
     })  
-    this.utilities = {
-      addMemberToTeam: this.addMemberToTeam,
-      savePlayer: this.savePlayer,
-    }
   }
 
   componentDidMount() {
     rv = false
-    console.log(Config.server)
     console.log('ping')
     fetch(Config.server + '/ping')
     .then((response) => response.json())
@@ -99,30 +244,16 @@ class HomeScreen extends React.Component {
     })
   }
 
-  savePlayer(playerName) {
-    playerId = 9
-    newPlayer = {
-      playerId: playerId,
-      playerName: playerName
-    }
-    this.players.push({playerId: playerId, playerName: playerName})
-    this.setState({
-      players: this.players
-    })
-    this.addMemberToTeam
-    return playerId
-  }
-
-  addMemberToTeam() {
-
-  }
-
   scoreSheetsBtnHandler() {
-    this.props.navigation.navigate('ScoreSheets', {teams: this.state.teams, players: this.players, utilities: this.utilities})
+    this.props.navigation.navigate('ScoreSheets', {teams: this.state.teams, myTeamId: this.state.teamId})
   }
 
   archivesBtnHandler() {
     this.props.navigation.navigate('Archives')
+  }
+
+  otherMatchesBtnHandler() {
+    this.props.navigation.navigate('OtherMatches', { teams: this.state.teams, myTeamId: this.state.teamId})
   }
 
   setTeam(teamId) {
@@ -130,7 +261,8 @@ class HomeScreen extends React.Component {
     then(() => {
       this.setState({
         teamName: this.teams.getTeam(teamId).teamName,
-        teamId: teamId
+        teamId: teamId,
+        teams: this.teams
       })
     })
   }
@@ -138,19 +270,17 @@ class HomeScreen extends React.Component {
   render() {
     const team = this.state.teamName
     return (
-      <View style={{flex: 1, justifyContent:'flex-start', flexDirection:'column', backgroundColor:'green'}}>
-        {!this.state.serverAlive &&
+      <View style={{flex: 1, flexDirection:'column'}}>
+        {!this.state.serverAlive &&      
           <View style={{flex: 1, flexDirection: 'row', justifyContent:'center'}}>
             <View>
               <Text style={{backgroundColor:'red', color: 'white'}}>Server is currently down.  Data will be saved on your device</Text>
             </View>
           </View>
         }
-
         <View style={{flex: 1, justifyContent:'flex-start', alignItems:'center',marginTop:100}}>
           <Text style={{fontSize: 24}}>Team: {team}</Text>      
         </View>
-
         <View style={{flex: 1, justifyContent:'flex-start', alignItems:'center'}}>
           <TouchableHighlight onPress={this.scoreSheetsBtnHandler} style={{paddingTop:10}}>
             <View style={{borderRadius:10, borderWidth: 1}}>
@@ -159,6 +289,13 @@ class HomeScreen extends React.Component {
               </Text>
             </View>
           </TouchableHighlight>
+          <TouchableHighlight onPress={this.otherMatchesBtnHandler} style={{paddingTop:10}}>
+            <View style={{borderRadius:10, borderWidth: 1}}>
+              <Text style={{fontSize:26, paddingLeft:10, paddingRight:10}}>
+                Browse Matches
+              </Text>
+            </View>
+          </TouchableHighlight>          
           <TouchableHighlight onPress={this.archivesBtnHandler} style={{paddingTop:10}}>
             <View style={{borderRadius:10, borderWidth: 1}}>
               <Text style={{fontSize:26, paddingLeft:10, paddingRight:10}}>
