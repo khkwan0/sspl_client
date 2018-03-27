@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {ScrollView, View, StyleSheet, Text, AsyncStorage} from 'react-native'
+import {ScrollView, View, StyleSheet, Text, AsyncStorage, TouchableHighlight} from 'react-native'
 import Set from './Set'
 import io from 'socket.io-client'
 import Players from './Players'
@@ -29,7 +29,9 @@ class Match extends Component {
       round: matchData.round,
       gameData: new Array(36),
       homeCaptainSubmit: matchData.homeCaptainSubmit,
-      awayCaptainSubmit: matchData.awayCaptainSubmit
+      awayCaptainSubmit: matchData.awayCaptainSubmit,
+      homeConfirmBackgroundColor: 'white',
+      awayConfirmBackgroundColor: 'white'
     }
     this.setGameData = this.setGameData.bind(this)
     this.wsSetup = this.wsSetup.bind(this)
@@ -40,6 +42,8 @@ class Match extends Component {
     this.getPlayerDataByTeam = this.getPlayerDataByTeam.bind(this)
     this.getPlayerDataRemote = this.getPlayerDataRemote.bind(this)
     this.getPlayerDataLocal = this.getPlayerDataLocal.bind(this)
+    this.homeTeamSubmit = this.homeTeamSubmit.bind(this)
+    this.awayTeamSubmit = this.awayTeamSubmit.bind(this)
   }
 
   wsSetup() {
@@ -205,7 +209,6 @@ class Match extends Component {
             players.forEach((player) => {
               this.players.addPlayer(player._id, player.playerName)
             })
-
           }          
         })        
         resolve(this.players)
@@ -279,6 +282,20 @@ class Match extends Component {
       })
       AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
     }
+  }
+
+  homeTeamSubmit() {
+    confirmState = this.state.homeCaptainSubmit ? false : true
+    this.setState({
+      homeCaptainSubmit: confirmState
+    })
+  }
+
+  awayTeamSubmit() {
+    confirmState = this.state.awayCaptainSubmit ? false: true
+    this.setState({
+      awayCaptainSubmit: confirmState
+    })
   }
 
   render() {
@@ -372,9 +389,57 @@ class Match extends Component {
         </View>
       )
     }
+    if (this.myTeamId == homeTeam.teamId) {      
+      homeConfirmBackgroundColor = this.state.homeCaptainSubmit? 'green' : 'white'
+      awayConfirmBackgroundColor = this.state.awayCaptainSubmit? 'green' : 'white'
+      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS confirmed': 'Waiting for AWAY team to confirm'
+      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS confirmed': 'HOME TEAM - Press here to confirm final score'
+      
+      toConfirm = (
+        <View style={{marginTop: 20}}>
+          <View style={{backgroundColor: homeConfirmBackgroundColor, borderRadius: 10, borderWidth: 1}}>
+            <TouchableHighlight onPress={this.homeTeamSubmit}>
+              <View style={{flex: 1, alignItems: 'center'}}>
+                <Text style={{fontSize: 24}}>{homeTeamString}</Text>          
+              </View>
+            </TouchableHighlight>
+          </View>
+          <View style={{marginTop:20}}>
+            <View style={{flex: 1, alignItems:'center', backgroundColor: awayConfirmBackgroundColor, borderRadius: 10, borderWidth: 1,  paddingLeft:10, marginBottom:30}}>
+              <Text style={{fontSize: 24}}>{awayTeamString}</Text>
+            </View>
+          </View>
+        </View>
+      )
+    }
+    if (this.myTeamId == awayTeam.teamId) {
+      homeConfirmBackgroundColor = this.state.homeCaptainSubmit? 'green' : 'white'
+      awayConfirmBackgroundColor = this.state.awayCaptainSubmit? 'green' : 'white'
+      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS confirmed': 'AWAY TEAM - Press here to confirm final score'
+      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS confirmed': 'Waiting for HOME team to confirm'
+      toConfirm = (
+        <View>
+          <View style={{backgroundColor: awayConfirmBackgroundColor, borderRadius:10, borderWidth: 1, paddingLeft: 10}}>
+            <TouchableHighlight onPress={this.awayTeamSubmit}>
+              <View>
+                <Text style={{fontSize:24}}>{awayTeamString}</Text>          
+              </View>
+            </TouchableHighlight>
+          </View>
+          <View style={{backgroundColor: awayConfirmBackgorundColor, borderRadius:10, borderWidth: 1, paddingLeft: 10, marginTop: 20}}>
+            <View>
+              <Text style={{fontSize: 24}}>{homeTeamString}</Text>
+            </View>
+          </View>
+        </View>
+      )
+    }
     return(
       <ScrollView>
         {toRender}
+        <View>
+          {toConfirm}
+        </View>
       </ScrollView>
     )
   }
