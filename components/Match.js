@@ -60,56 +60,26 @@ class Match extends Component {
         this.newArray = this.state.gameData
         this.newArray[msg.data.gameNo] = msg.data
         this.setState({
-          gameData: this.newArray        
+          gameData: this.newArray,
+          homeCaptainSubmit: false,
+          awayCaptainSubmit: false
         })
+        AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
+      }
+      if (typeof msg.event != 'undefined' && msg.event == 'submitmatchdata') {      
+        if (msg.home) {
+          this.setState({
+            homeCaptainSubmit: msg.confirm
+          })        
+        } else {
+          this.setState({
+            awayCaptainSubmit: msg.confirm
+          })
+        }
         AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
       }
     })
   }
-
-/*
-  componentWillMount() {
-    if (Config.disableLocalSave) {
-      this.getMyTeamPlayers()
-    } else {
-      // get my team from local
-      console.log('get players from local')
-      AsyncStorage.getItem('myTeamPlayers')
-      .then((myPlayersStr) => {
-        try {
-          myPlayers = JSON.parse(myPlayersStr)
-          for (let i = 0; i < myPlayers.length; i++) {
-            this.players.addPlayer(myPlayers.playerId, myPlayers.playerName)
-          }
-        } catch(err) {
-          console.log(err)
-          this.getMyTeamPlayers()
-        }
-      })
-      .catch((err) => {      
-        console.log(err)
-        this.getMyTeamPlayers()
-      })
-    }
-  }
-
-  getMyTeamPlayers() {
-    console.log('get players from reomte')
-    fetch(Config.server + '/players/' + this.myTeamId)
-    .then((results) => results.json())
-    .then((resultJson) => {
-      if (typeof resultJson.players != 'undefined' && resultJson.players) {
-        resultJson.players.forEach((player, index) => {
-          this.players.addPlayer(player[0]._id, player[0].playerName)
-        })
-        console.log(this.players)
-      }
-    })
-    .catch((err) => {
-      console.log(err)
-    })    
-  }
-  */
 
   getGameDataLocal() {
     return new Promise((resolve, reject) => {
@@ -278,7 +248,9 @@ class Match extends Component {
       newArray = this.state.gameData
       newArray[gameData.gameNo] = gameData
       this.setState({
-        gameData: newArray
+        gameData: newArray,
+        awayCaptainSubmit: false,
+        homeCaptainSubmit: false
       })
       AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
     }
@@ -286,6 +258,7 @@ class Match extends Component {
 
   homeTeamSubmit() {
     confirmState = this.state.homeCaptainSubmit ? false : true
+    this.socket.emit('message', {event: 'submitmatchdata',data: {room: 'match'+matchData.matchId, home: true, confirm: confirmState}})
     this.setState({
       homeCaptainSubmit: confirmState
     })
@@ -293,6 +266,7 @@ class Match extends Component {
 
   awayTeamSubmit() {
     confirmState = this.state.awayCaptainSubmit ? false: true
+    this.socket.emit('message', {event: 'submitmatchdata',data: {room: 'match'+matchData.matchId, home: false, confirm: confirmState}})
     this.setState({
       awayCaptainSubmit: confirmState
     })
@@ -390,10 +364,10 @@ class Match extends Component {
       )
     }
     if (this.myTeamId == homeTeam.teamId) {      
-      homeConfirmBackgroundColor = this.state.homeCaptainSubmit? 'green' : 'white'
-      awayConfirmBackgroundColor = this.state.awayCaptainSubmit? 'green' : 'white'
-      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS confirmed': 'Waiting for AWAY team to confirm'
-      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS confirmed': 'HOME TEAM - Press here to confirm final score'
+      homeConfirmBackgroundColor = this.state.homeCaptainSubmit? 'green' : 'yellow'
+      awayConfirmBackgroundColor = this.state.awayCaptainSubmit? 'green' : 'yellow'
+      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS signed this scoresheet': 'Waiting for AWAY team to sign this score sheet'
+      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS signed this scoresheet': 'HOME TEAM - Press here to sign this scoresheet'
       
       toConfirm = (
         <View style={{marginTop: 20}}>
@@ -415,8 +389,8 @@ class Match extends Component {
     if (this.myTeamId == awayTeam.teamId) {
       homeConfirmBackgroundColor = this.state.homeCaptainSubmit? 'green' : 'white'
       awayConfirmBackgroundColor = this.state.awayCaptainSubmit? 'green' : 'white'
-      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS confirmed': 'AWAY TEAM - Press here to confirm final score'
-      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS confirmed': 'Waiting for HOME team to confirm'
+      awayTeamString = this.state.awayCaptainSubmit? 'AWAY team HAS signed this scoresheet': 'AWAY TEAM - Press here to sign this scoresheet'
+      homeTeamString = this.state.homeCaptainSubmit? 'HOME team HAS signed this scoresheet': 'Waiting for HOME team to sign this scoresheet'
       toConfirm = (
         <View>
           <View style={{backgroundColor: awayConfirmBackgroundColor, borderRadius:10, borderWidth: 1, paddingLeft: 10}}>
