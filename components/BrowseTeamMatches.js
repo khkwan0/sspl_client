@@ -21,7 +21,6 @@ class BrowseTeamMatches extends Component {
     let rows = []
     let chosenIndex = this.props.navigation.state.params.chosenIndex
 
-    console.log(this.matches)
     let matches = chosenIndex.type == 'team'? this.matches[chosenIndex.teamId] : this.matches[chosenIndex.date]
     //console.log(this.matches)
     for (let key in matches) {
