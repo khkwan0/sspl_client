@@ -6,18 +6,25 @@ class PlayerPicker extends Component {
     super(props)
     this.updatePlayer = this.updatePlayer.bind(this)
     this.closeModal = this.closeModal.bind(this)
+    this.selectPlayer = this.selectPlayer.bind(this)
     
     this.state = {
-      showModal: true
+      showModal: true,
+      selectedValue: -1
     }
   }
 
   updatePlayer(playerId) {
+    this.setState({
+      selectedValue: playerId
+    })
+  }
+
+  selectPlayer() {
+    playerId = this.state.selectedValue
     if (playerId != -2) {
-      if (typeof this.props.setPlayer != 'undefined') {
-        this.props.setPlayer(playerId)
-        this.closeModal()
-      }
+      this.props.setPlayer(playerId)
+      this.closeModal()
     } else {
       this.props.showAddPlayer()
     }
@@ -32,7 +39,7 @@ class PlayerPicker extends Component {
     console.log(players)
     var pickerItems = []
     players.map((playerId, i) => {
-      player = this.props.players.getPlayer(playerId)
+      let player = this.props.players.getPlayer(playerId)
       var playerName = ''
       if (player) {
         playerName = player.playerName
@@ -45,8 +52,11 @@ class PlayerPicker extends Component {
       <Modal animationType='slide' visible={this.state.showModal} onRequestClose={this.closeModal}>
         {this.state.playerId != -2 &&
           <View style={styles.modalView}>
-            <Button onPress={this.closeModal} title="Cancel" />
-            <Picker selectedValue={-1} onValueChange={this.updatePlayer}>
+            <View style={{flex:1, flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Button onPress={this.closeModal} title="Cancel" />
+              <Button onPress={this.selectPlayer} title="Done" />
+            </View>
+            <Picker selectedValue={this.selectedValue} onValueChange={this.updatePlayer}>
               <Picker.Item value={-1} label="Choose A Player" />
               {pickerItems}
               <Picker.Item value={-2} label="Add new Player" />

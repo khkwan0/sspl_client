@@ -4,8 +4,8 @@ import Team from './Team'
 import Teams from './Teams'
 import Player from './Player'
 import Players from './Players'
+import ChooseTeam from './ChooseTeam'
 import Config from './Config'
-import ChooseTeam from './ChooseTeam';
 
 class HomeScreen extends Component {
   static navigationOptions = {
@@ -13,7 +13,7 @@ class HomeScreen extends Component {
   };
 
   constructor(props) {
-    super(props)
+    super(props)    
 
     this.scoreSheetsBtnHandler = this.scoreSheetsBtnHandler.bind(this)
     this.archivesBtnHandler = this.archivesBtnHandler.bind(this)
@@ -22,6 +22,8 @@ class HomeScreen extends Component {
     this.getSeasonData = this.getSeasonData.bind(this)
     this.getSeasonFromLocal = this.getSeasonFromLocal.bind(this)
     this.getSeasonFromRemote = this.getSeasonFromRemote.bind(this)
+    this.changeTeamHandler = this.changeTeamHandler.bind(this)
+    this.getAppData = this.getAppData.bind(this)
 
     this.getTeams = this.getTeams.bind(this)
     this.getTeamsFromRemote = this.getTeamsFromRemote.bind(this)
@@ -34,6 +36,17 @@ class HomeScreen extends Component {
       players: this.players,      
       serverAlive: true,
     }
+  }
+
+  changeTeamHandler() {
+    AsyncStorage.removeItem('myTeam')
+    .then(() => {
+      this.getAppData()
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+    
   }
 
   getTeams() {
@@ -158,7 +171,7 @@ class HomeScreen extends Component {
     })
   }
 
-  componentWillMount() {
+  getAppData() {
     this.getSeasonData()
     .then((seasonData) => {
       Config.season = seasonData.season
@@ -199,7 +212,11 @@ class HomeScreen extends Component {
     .catch((err) => {
       console.log(err)
       console.log('NO SEASON DATA')
-    })    
+    })   
+  }
+
+  componentWillMount() {
+    this.getAppData()
   }
 
   getMyTeam() {
@@ -303,6 +320,13 @@ class HomeScreen extends Component {
               </Text>
             </View>
           </TouchableHighlight>
+          <TouchableHighlight onPress={this.changeTeamHandler} style={{paddingTop:10}}>
+            <View style={{borderRadius:10, borderWidth: 1}}>
+              <Text style={{fontSize:26, paddingLeft:10, paddingRight:10}}>
+                Change Team
+              </Text>
+            </View>
+          </TouchableHighlight>          
         </View>
       </View>
     )

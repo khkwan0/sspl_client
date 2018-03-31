@@ -51,7 +51,10 @@ class Set extends Component {
           key={this.props.setNumber + '_' + i}
           type={this.state.type}
           setNo={this.props.setNumber}
-          gameNo={this.props.startingGameNo + i} />
+          gameNo={this.props.startingGameNo + i}
+          isComplete={this.props.isComplete} 
+          nameSearch={this.props.nameSearch}
+        />
         )
     }
     return(

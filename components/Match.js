@@ -17,8 +17,8 @@ class Match extends Component {
     gameDataStorageKey = 'match'+matchData.matchId
     this.myTeamId = this.props.navigation.state.params.myTeamId
     this.players = new Players()
+    this.knownNames = null // will hold the call back for name query
 
-    console.log(this.props.navigation.state.params.homeTeam)
     this.state = {
       matchId: matchData.matchId,
       matchDate: matchData.matchDate,
@@ -31,7 +31,9 @@ class Match extends Component {
       homeCaptainSubmit: matchData.homeCaptainSubmit,
       awayCaptainSubmit: matchData.awayCaptainSubmit,
       homeConfirmBackgroundColor: 'white',
-      awayConfirmBackgroundColor: 'white'
+      awayConfirmBackgroundColor: 'white',
+      isComplete: matchData.isComplete,
+
     }
     this.setGameData = this.setGameData.bind(this)
     this.wsSetup = this.wsSetup.bind(this)
@@ -44,11 +46,12 @@ class Match extends Component {
     this.getPlayerDataLocal = this.getPlayerDataLocal.bind(this)
     this.homeTeamSubmit = this.homeTeamSubmit.bind(this)
     this.awayTeamSubmit = this.awayTeamSubmit.bind(this)
+    this.nameSearch = this.nameSearch.bind(this)
   }
 
   wsSetup() {
     //this.socket = openSocket('http://192.168.1.106:9988')
-    this.socket = io('http://192.168.1.106:9988')
+    this.socket = io(Config.server)
     this.socket.on('connect', (err) => {
       if (err) {
         console(err)
@@ -56,29 +59,41 @@ class Match extends Component {
       this.socket.emit('message', {event: 'join', data: {room: 'match'+matchData.matchId}})
     })
     this.socket.on('rcvmsg', (msg) => {
-      if (typeof msg.event != 'undefined' && msg.event == 'gamedata') {
-        this.newArray = this.state.gameData
-        this.newArray[msg.data.gameNo] = msg.data
-        this.setState({
-          gameData: this.newArray,
-          homeCaptainSubmit: false,
-          awayCaptainSubmit: false
-        })
-        AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
-      }
-      if (typeof msg.event != 'undefined' && msg.event == 'submitmatchdata') {      
-        if (msg.home) {
+      if (typeof msg.event != 'undefined') {
+        if (msg.event == 'gamedata') {
+          this.newArray = this.state.gameData
+          this.newArray[msg.data.gameNo] = msg.data
           this.setState({
-            homeCaptainSubmit: msg.confirm
-          })        
-        } else {
-          this.setState({
-            awayCaptainSubmit: msg.confirm
+            gameData: this.newArray,
+            homeCaptainSubmit: false,
+            awayCaptainSubmit: false
           })
+          AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
         }
-        AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
+        if (msg.event == 'submitmatchdata') {      
+          if (msg.home) {
+            this.setState({
+              homeCaptainSubmit: msg.confirm
+            })        
+          } else {
+            this.setState({
+              awayCaptainSubmit: msg.confirm
+            })
+          }
+          AsyncStorage.setItem(gameDataStorageKey, JSON.stringify(this.state))
+        }
+        if (msg.event == 'namequery') {
+          console.log(msg.names)
+          console.log(this.knownNames)
+          this.knownNames(msg.names)
+        }
       }
     })
+  }
+
+  nameSearch(name, knownNamesCallBack) {
+    this.knownNames = knownNamesCallBack
+    this.socket.emit('message', {event: 'namequery', data: {name: name}})
   }
 
   getGameDataLocal() {
@@ -258,7 +273,7 @@ class Match extends Component {
 
   homeTeamSubmit() {
     confirmState = this.state.homeCaptainSubmit ? false : true
-    this.socket.emit('message', {event: 'submitmatchdata',data: {room: 'match'+matchData.matchId, home: true, confirm: confirmState}})
+    this.socket.emit('message', {event: 'submitmatchdata',data: {room: 'match'+matchData.matchId, home: true, matchid: matchData.matchId, confirm: confirmState}})
     this.setState({
       homeCaptainSubmit: confirmState
     })
@@ -304,7 +319,10 @@ class Match extends Component {
             setNumber={1} 
             type={2}
             numGames={4}
-            startingGameNo={1} />
+            startingGameNo={1}
+            isComplete={this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />
           <Set
             setGameData={this.setGameData}
             gameData={this.state.gameData}
@@ -314,7 +332,10 @@ class Match extends Component {
             setNumber={2}
             type={1}
             numGames={8} 
-            startingGameNo={5} />
+            startingGameNo={5}
+            isComplete={this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />
           <Set 
             setGameData={this.setGameData}
             gameData={this.state.gameData} 
@@ -324,7 +345,10 @@ class Match extends Component {
             setNumber={3} 
             type={2}
             numGames={4}
-            startingGameNo={13} />
+            startingGameNo={13}
+            isComplete={this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />
           <Set
             setGameData={this.setGameData}
             gameData={this.state.gameData}
@@ -334,7 +358,10 @@ class Match extends Component {
             setNumber={4}
             type={1}
             numGames={8} 
-            startingGameNo={17} />
+            startingGameNo={17}
+            isComplete={this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />
           <Set 
             setGameData={this.setGameData}
             gameData={this.state.gameData} 
@@ -344,7 +371,10 @@ class Match extends Component {
             setNumber={5} 
             type={2}
             numGames={4}
-            startingGameNo={25} />
+            startingGameNo={25}
+            isComplete = {this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />
           <Set
             setGameData={this.setGameData}
             gameData={this.state.gameData}
@@ -354,7 +384,10 @@ class Match extends Component {
             setNumber={6}
             type={1}
             numGames={8} 
-            startingGameNo={33} />                        
+            startingGameNo={33}
+            isComplete={this.state.isComplete}
+            nameSearch={this.nameSearch}
+            />                        
         </View>
       )
     } else {
@@ -400,7 +433,7 @@ class Match extends Component {
               </View>
             </TouchableHighlight>
           </View>
-          <View style={{backgroundColor: awayConfirmBackgorundColor, borderRadius:10, borderWidth: 1, paddingLeft: 10, marginTop: 20}}>
+          <View style={{backgroundColor: homeConfirmBackgroundColor, borderRadius:10, borderWidth: 1, paddingLeft: 10, marginTop: 20}}>
             <View>
               <Text style={{fontSize: 24}}>{homeTeamString}</Text>
             </View>
